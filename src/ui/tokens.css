@@ -1,0 +1,12 @@
+:root {
+  --S: min(100vw, 100vh);
+  --u: calc(var(--S) / 100);
+  --bg: #030407;
+  --ink: #f3efe6;
+  --muted: #8d8a82;
+  --gold: #d9c58f;
+  --hair: rgba(217, 197, 143, 0.28);
+  /* Brand type: Oxanium is primary; Abhaya Libre is for stories and softer content. */
+  --sans: var(--font-oxanium), system-ui, sans-serif;
+  --serif: var(--font-abhaya), "Times New Roman", serif;
+}

@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  reactStrictMode: false,
+  // The dev badge would sit on top of the round display.
+  devIndicators: false,
 };
 
 export default nextConfig;
