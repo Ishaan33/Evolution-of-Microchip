@@ -1,7 +1,7 @@
 import { puckSize } from '@/layout/table';
 import { ERA } from '@/ui/tokens';
 const SVG = 'http://www.w3.org/2000/svg';
-/** What is engraved in the film: a socket for each puck along the lower rim, with its year showing once the puck is away. */
+/** The rack around the screen: a socket for each puck, with its year. */
 export class TableFace {
     el = document.createElementNS(SVG, 'svg');
     years;

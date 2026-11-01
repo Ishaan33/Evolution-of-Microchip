@@ -11,10 +11,11 @@ export class PuckMesh {
     glowTarget = 0;
     tiltX = 0;
     tiltY = 0;
+    time = 0;
     constructor(map, accent) {
         const body = new THREE.Mesh(bodyGeometry(), new THREE.MeshStandardMaterial({ color: '#2a2c35', metalness: 0.92, roughness: 0.34 }));
         // Unlit: the face is already a photograph, and the chip's accent light would wash it out.
-        const face = new THREE.Mesh(new THREE.CircleGeometry(0.925, 72), new THREE.MeshBasicMaterial({ map, color: new THREE.Color(1.4, 1.4, 1.4) }));
+        const face = new THREE.Mesh(new THREE.CircleGeometry(0.925, 72), new THREE.MeshBasicMaterial({ map, color: new THREE.Color(1.08, 1.08, 1.08) }));
         face.position.z = 0.252;
         this.ring = new THREE.Mesh(new THREE.TorusGeometry(0.965, 0.018, 8, 96), new THREE.MeshStandardMaterial({ color: '#000000', emissive: accent, emissiveIntensity: 0.5, roughness: 0.4 }));
         this.ring.position.z = 0.238;
@@ -24,14 +25,21 @@ export class PuckMesh {
     setGlow(v) { this.glowTarget = v; }
     /** `vx`, `vy`: how fast the puck is travelling across the stage, in percent per second. */
     place(world, z, radius, vx, vy, dt) {
-        this.view.position.set(world[0], world[1], z);
+        this.time += dt;
+        const isCarried = z > 0.08;
+        const levitateBob = isCarried ? Math.sin(this.time * 3.6) * 0.06 * Math.min(1.0, z * 0.5) : 0;
+        this.view.position.set(world[0], world[1], z + levitateBob);
         this.view.scale.setScalar(radius);
-        const lean = (v) => Math.max(-0.5, Math.min(0.5, v * 0.0052));
-        this.tiltY = damp(this.tiltY, lean(vx), 10, dt);
-        this.tiltX = damp(this.tiltX, lean(vy), 10, dt);
-        this.view.rotation.set(this.tiltX, this.tiltY, 0);
-        this.glow = damp(this.glow, this.glowTarget, 5, dt);
-        this.ring.material.emissiveIntensity = 0.45 + this.glow * 2.1;
+        
+        const lean = (v) => Math.max(-0.55, Math.min(0.55, v * 0.0055));
+        this.tiltY = damp(this.tiltY, lean(vx), 11, dt);
+        this.tiltX = damp(this.tiltX, lean(vy), 11, dt);
+        const rollWobble = isCarried ? Math.sin(this.time * 4.2) * 0.025 * Math.min(1.0, (Math.abs(vx) + Math.abs(vy)) * 0.06) : 0;
+        this.view.rotation.set(this.tiltX, this.tiltY, rollWobble);
+        
+        this.glow = damp(this.glow, this.glowTarget, 6, dt);
+        const breathe = 0.5 + 0.5 * Math.sin(this.time * 5.5);
+        this.ring.material.emissiveIntensity = 0.48 + this.glow * 2.8 + (isCarried ? 0.85 * breathe : 0.0);
     }
     destroy() {
         this.view.removeFromParent();

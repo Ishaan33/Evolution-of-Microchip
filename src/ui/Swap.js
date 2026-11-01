@@ -40,7 +40,11 @@ export class Swap {
         this.pending = null;
         this.parent.prepend(this.current);
         const { duration, enterY } = this.opts;
-        gsap.fromTo(this.current, { opacity: 0, y: prefersReduced() ? 0 : enterY }, { opacity: 1, y: 0, duration, ease: 'power1.inOut' });
+        if (!old) {
+            this.current.style.opacity = '1';
+            return;
+        }
+        gsap.fromTo(this.current, { opacity: 0, y: prefersReduced() ? 0 : enterY }, { opacity: 1, y: 0, duration, ease: 'power2.out' });
     }
     destroy() {
         if (this.current)

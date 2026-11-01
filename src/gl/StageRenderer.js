@@ -18,14 +18,15 @@ export class StageRenderer {
     accents = [new THREE.PointLight('#ffffff', 0, 90), new THREE.PointLight('#ffffff', 0, 90)];
     camZ;
     px = 0.12;
-    constructor(stage, { fov, near, far }, bloom) {
+    constructor(stage, { fov, near, far }, bloom, isKiosk = false) {
         const r = (this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' }));
         r.setPixelRatio(Math.min(Math.max(window.devicePixelRatio, 1), 2));
         // Neutral keeps the era colours true where filmic curves would wash them out.
         r.toneMapping = THREE.NeutralToneMapping;
         r.setClearColor('#000000', 1);
         this.canvas.className = 'chips';
-        this.camZ = 50 / Math.tan((fov / 2) * (Math.PI / 180));
+        const span = isKiosk ? 100 : 136;
+        this.camZ = (span / 2) / Math.tan((fov / 2) * (Math.PI / 180));
         this.camera = new THREE.PerspectiveCamera(fov, 1, near, far);
         this.camera.position.z = this.camZ;
 
@@ -52,12 +53,15 @@ export class StageRenderer {
             const { clientWidth: w, clientHeight: h } = stage;
             if (!w || !h)
                 return;
-            r.setSize(w, h, false);
+            const scale = isKiosk ? 1 : 1.36;
+            const cw = Math.round(w * scale);
+            const ch = Math.round(h * scale);
+            r.setSize(cw, ch, false);
             this.composer.setPixelRatio(r.getPixelRatio());
-            this.composer.setSize(w, h);
-            this.camera.aspect = w / h;
+            this.composer.setSize(cw, ch);
+            this.camera.aspect = 1;
             this.camera.updateProjectionMatrix();
-            this.px = 100 / (h * r.getPixelRatio());
+            this.px = span / (ch * r.getPixelRatio());
         };
         this.observer = new ResizeObserver(fit);
         this.observer.observe(stage);

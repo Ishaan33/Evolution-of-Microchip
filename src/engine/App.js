@@ -58,8 +58,8 @@ export class App {
     /** Chips shrinking away after their key went. */
     leaving = new Set();
     chipTex = [];
-    /** Turn and explode state of each hero slot: two docks, then the attract-mode chip. */
-    ctl = [newCtl(), newCtl(), newCtl()];
+    /** Turn and explode state of each hero slot, one per dock. */
+    ctl = [newCtl(), newCtl()];
     /** Chip id -> {kind: home | dock | stray | air, x, y, slot, socket, since}. */
     where = {};
     idle = false;
@@ -78,6 +78,8 @@ export class App {
         // The chip lids are drawn with the brand font, so it has to be ready first.
         await Promise.all(['500', '600'].map((w) => document.fonts.load(`${w} 34px ${brandFont()}`)));
         const mode = sensorMode(app);
+        const isKiosk = mode === 'touch' || new URLSearchParams(window.location.search).has('kiosk');
+        if (isKiosk) this.stage.classList.add('kiosk');
         const faces = mode === 'sim' ? await SimSensor.faces(chips) : [];
         if (this.destroyed) {
             faces.forEach((t) => t.dispose());
@@ -85,8 +87,8 @@ export class App {
         }
         this.home = homePositions(app, chips.length);
         const reduced = prefersReduced();
-        const gl = (this.gl = new StageRenderer(this.stage, app.camera, app.bloom));
-        this.chipTex = chips.map((c, i) => chipTextures(c, ERA[i]));
+        const gl = (this.gl = new StageRenderer(this.stage, app.camera, app.bloom, isKiosk));
+        this.chipTex = await Promise.all(chips.map((c, i) => chipTextures(c, ERA[i])));
         // Uploaded now, while nothing is moving, rather than in the middle of an animation.
         for (const { lid, die } of this.chipTex) {
             gl.renderer.initTexture(lid);
@@ -130,6 +132,16 @@ export class App {
         this.stage.append(this.hud.el);
         this.attract = new Attract(app.timing, () => this.goIdle(), () => this.nextAttract());
         this.sync();
+        const initDock = new URLSearchParams(window.location.search).get('dock');
+        if (initDock) {
+            initDock.split(',').forEach((cid) => {
+                const c = chips.find((ch) => ch.id === cid || String(ch.year) === cid);
+                if (c) this.simToggle(c.id);
+            });
+        }
+        if (new URLSearchParams(window.location.search).has('explode')) {
+            this.ctl.forEach((c) => { c.explode = true; });
+        }
         this.timer.connect(document);
         gl.renderer.setAnimationLoop((t) => {
             this.timer.update(t);
@@ -205,6 +217,11 @@ export class App {
     }
     /** The simulator settles a puck neatly; a person will not. */
     snapped(x, y, id) {
+        // Let go outside the screen, a puck goes back to its own socket.
+        if (Math.hypot(x - 50, y - 50) > 50) {
+            const own = this.home[this.cfg.chips.findIndex((c) => c.id === id)];
+            return [own.x, own.y];
+        }
         const to = classify(this.cfg.app, this.home, this.where, id, x, y);
         if (to.kind === 'dock')
             return this.cfg.app.dock.positions[to.slot];
@@ -279,9 +296,7 @@ export class App {
         // A puck sliding along the film can be seen coming, so its target dock can brighten. One in the air cannot.
         const stray = held && where[held.id].kind === 'stray';
         const near = stray ? nearDock(app, slots, held.x, held.y) : null;
-        // On an empty table, lifting a puck brings up that chip straight away.
-        const onShow = heldIndex >= 0 ? heldIndex : cycle;
-        const heroes = layoutHeroes(app, chips, slots, count, onShow, ERA);
+        const heroes = layoutHeroes(app, chips, slots, count, ERA);
         const spotlit = count === 0 && !held ? cycle : -1;
 
         const socketTaken = chips.map((_, i) => chips.some((c) => where[c.id].kind === 'home' && where[c.id].socket === i));
@@ -293,18 +308,16 @@ export class App {
         this.face.update({ empty: socketTaken.map((t) => !t) });
         this.sensor.sync({ where, spotlit });
 
-        // Attract mode runs the bands quietly through the chips, so the dial explains itself before anyone touches it.
-        const preview = count === 0;
+        // Chip readings belong to a seated puck. Until then the table shows its own thing: the wafer.
         const toLane = (s) => s && { chip: s.chip, color: ERA[s.index] };
-        const sides = preview ? [{ chip: chips[onShow], index: onShow }, null] : slots;
+        this.film.setWafer(count > 0 ? 0 : held ? 0.3 : 1, cycle);
         this.film.setDrag(held, heldColor);
         this.film.setDocks(slots, held, near, heldColor);
         this.film.setSeats(slots.map((s) => (s ? [where[s.chip.id].x, where[s.chip.id].y] : null)));
-        this.film.setLanes(sides.map(toLane), { preview, paired: count === 2, norms: (r, c) => ROWS[r].norm(c) });
+        this.film.setLanes(slots.map(toLane), { paired: count === 2, norms: (r, c) => ROWS[r].norm(c) });
         this.film.setFocus(focus ? ROWS.findIndex((r) => r.key === focus) : null);
         this.conduits.setActive(slots);
-        // Dimmed only with nothing docked: a reading already on show must stay readable while a second puck is on its way.
-        this.dial.update({ sides, preview, dim: !!held && count === 0 });
+        this.dial.update({ sides: slots });
         this.dial.setFocus(focus);
 
         this.syncHeroes(heroes);

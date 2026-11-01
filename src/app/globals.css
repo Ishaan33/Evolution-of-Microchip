@@ -15,17 +15,84 @@ html, body {
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 button:focus-visible, .puck:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
 
-.stage { position: absolute; left: 50%; top: 50%; width: var(--S); height: var(--S); transform: translate(-50%, -50%); overflow: hidden; border-radius: 50%; }
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: var(--S);
+  height: var(--S);
+  transform: translate(-50%, -50%);
+  overflow: visible;
+}
 
-/* The canvas is the display; everything else floats above it. */
-.chips { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; z-index: 0; }
+/* Elegant circular bezel indicating the 23.6-inch round display edge */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(217, 197, 143, 0.35);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 0, 0, 0.8), inset 0 0 25px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* In kiosk mode, the display is exactly the 848x848 circular panel */
+.stage.kiosk {
+  /* --u is worked out on :root from the smaller preview stage, so it has to be restated for the full panel. */
+  --u: calc(min(100vw, 100vh) / 100);
+  top: 50%;
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
+  overflow: hidden;
+  border-radius: 50%;
+}
+.stage.kiosk::before {
+  display: none;
+}
+
+/* The canvas is the display; sized to 136% in sim mode to encompass outer pucks */
+.chips {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 136%;
+  height: 136%;
+  transform: translate(-50%, -50%);
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+}
+.stage.kiosk .chips {
+  width: 100%;
+  height: 100%;
+}
 .layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 
-/* Engraved in the film */
-.socket { fill: rgba(0, 0, 0, 0.3); stroke: rgba(217, 197, 143, 0.12); stroke-width: 0.14; transition: stroke 0.4s; }
-.socket.open { stroke: rgba(217, 197, 143, 0.3); }
-.year { fill: var(--a); font: 500 2.1px var(--sans); letter-spacing: 0.1px; text-anchor: middle; opacity: 0; transition: opacity 0.5s; }
-.year.on { opacity: 0.75; }
+/* Physical sockets on the table outside the circular screen */
+.socket {
+  fill: rgba(14, 16, 24, 0.92);
+  stroke: rgba(217, 197, 143, 0.25);
+  stroke-width: 0.22;
+  transition: stroke 0.4s, fill 0.4s;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.85));
+}
+.socket.open {
+  stroke: rgba(217, 197, 143, 0.6);
+  fill: rgba(22, 26, 38, 0.95);
+}
+.year {
+  fill: var(--a);
+  font: 600 2.5px var(--sans);
+  letter-spacing: 0.12px;
+  text-anchor: middle;
+  opacity: 0.45;
+  transition: opacity 0.4s, filter 0.4s;
+}
+.year.on {
+  opacity: 0.95;
+  filter: drop-shadow(0 0 5px var(--a));
+}
 
 /* Only when simulating pucks: on the table they are real objects and nothing is drawn for them. */
 .puck { position: absolute; aspect-ratio: 1; cursor: grab; touch-action: none; border-radius: 50%; transform: translate(-50%, -50%); }

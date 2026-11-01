@@ -20,6 +20,7 @@ export class Chip {
     spin = 1.1;
     pose = [0, 0];
     leaving = false;
+    time = 0;
     constructor(hero, textures, place) {
         const { index, w, accent } = hero;
         this.place = place;
@@ -70,6 +71,7 @@ export class Chip {
     }
     update(dt, ctl) {
         const { w, t, root } = this;
+        this.time += dt;
         const c = ctl[this.ci];
         this.appear = damp(this.appear, this.leaving ? 0 : 1, this.leaving ? 11 : 5.5, dt);
         this.explode = damp(this.explode, c.explode ? 1 : 0, 3.6, dt);
@@ -79,15 +81,28 @@ export class Chip {
         const [x, y] = this.place(this.pose[0], this.pose[1], HOVER);
         this.view.position.x = damp(this.view.position.x, x, 5, dt);
         this.view.position.y = damp(this.view.position.y, y, 5, dt);
+
+        // Smooth cinematic hover bob and gyroscopic precession
+        const hoverBob = Math.sin(this.time * 1.8) * 0.65 + Math.cos(this.time * 0.9) * 0.25;
+        const tiltX = Math.sin(this.time * 1.2) * 0.05;
+        const tiltZ = Math.cos(this.time * 0.95) * 0.03;
+
         // Scale, not fade: toggling material.transparent selects another shader program, and compiling it drops frames.
         root.scale.setScalar(Math.max(0.001, this.appear));
-        root.position.z = HOVER + Math.sin(c.ry * 1.3) * 0.5;
-        root.rotation.x = c.rx + Math.sin(c.ry * 0.71) * 0.05;
-        root.rotation.y = Math.sin(c.ry) * 0.3 + c.dy + this.spin;
-        this.frame.position.z = t * 0.26 + this.explode * w * 0.1;
-        this.die.position.z = t * 0.34 + this.explode * w * 0.26;
-        this.lid.position.z = t * 0.56 + this.explode * w * 0.58;
-        this.dieMat.emissiveIntensity = 0.5 + this.explode * 1.9;
+        root.position.z = HOVER + hoverBob;
+        root.rotation.x = c.rx + tiltX - this.explode * 0.12;
+        root.rotation.y = Math.sin(c.ry) * 0.32 + c.dy + this.spin;
+        root.rotation.z = tiltZ;
+
+        // Dynamic multi-layer explosion with architectural angle
+        this.frame.position.z = t * 0.26 + this.explode * w * 0.12;
+        this.die.position.z = t * 0.34 + this.explode * w * 0.32;
+        this.lid.position.z = t * 0.56 + this.explode * w * 0.68;
+        this.lid.rotation.x = -this.explode * 0.14;
+
+        // Computational rhythm: glowing silicon execution cores pulse with lively activity
+        const computePulse = Math.sin(this.time * 7.5) * 0.35 + Math.sin(this.time * 15.0) * 0.18;
+        this.dieMat.emissiveIntensity = 0.55 + this.explode * (2.2 + computePulse);
     }
     /** Shrinks away before removal; App destroys it once `gone`. */
     leave() { this.leaving = true; }

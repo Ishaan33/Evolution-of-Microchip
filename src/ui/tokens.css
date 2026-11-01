@@ -1,5 +1,5 @@
 :root {
-  --S: min(100vw, 100vh);
+  --S: min(80vw, 80vh);
   --u: calc(var(--S) / 100);
   --bg: #030407;
   --ink: #f3efe6;

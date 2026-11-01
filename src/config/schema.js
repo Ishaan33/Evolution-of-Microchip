@@ -18,7 +18,6 @@ export const appSchema = z.object({
         pairSpanDeg: z.number().positive(), stagger: z.number().min(0), conduitDelay: z.number().min(0),
     }),
     hero: z.object({
-        attract: hero,
         single: hero,
         pair: hero.extend({ x: point }),
         shrink: z.number().min(0).max(1),

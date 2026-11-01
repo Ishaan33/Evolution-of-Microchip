@@ -58,7 +58,7 @@ export class Hud {
             if (!keys.has(key))
                 this.grabs.delete(key);
         }
-        const size = `${count === 2 ? hero.pair.grab : count === 1 ? hero.single.grab : hero.attract.grab}%`;
+        const size = `${count === 2 ? hero.pair.grab : hero.single.grab}%`;
         for (const h of heroes) {
             let el = this.grabs.get(h.key);
             if (!el) {

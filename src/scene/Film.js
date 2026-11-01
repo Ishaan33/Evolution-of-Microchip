@@ -31,6 +31,10 @@ export class Film {
     }));
     shockAge = [-1, -1];
     seatTarget = [null, null];
+    dialTarget = 0;
+    waferTarget = 1;
+    eraTarget = 0;
+    eraColTarget = new THREE.Color(ERA[0]);
     socketTarget = [];
     constructor(app, chips, home, reduced) {
         this.app = app;
@@ -56,6 +60,7 @@ export class Film {
             uSpan: { value: new THREE.Vector2(Math.PI, Math.PI) }, uGain: { value: new THREE.Vector2() }, uStreams: { value: new THREE.Vector2(1, 1) },
             uCol: { value: [new THREE.Color('#ffffff'), new THREE.Color('#ffffff')] },
             uTrackHi: { value: new THREE.Vector4() },
+            uDialOn: { value: 0 }, uWafer: { value: 1 }, uEra: { value: 0 }, uEraCol: { value: new THREE.Color(ERA[0]) },
         };
         this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.ShaderMaterial({ vertexShader: filmVertex, fragmentShader: filmFragment, uniforms: this.u }));
         this.mesh.renderOrder = -1;
@@ -77,7 +82,8 @@ export class Film {
         [0, 1].forEach((i) => {
             const taken = !!slots[i] && slots[i].chip.id !== drag?.id;
             this.takenTarget[i] = taken ? 1 : 0;
-            this.glowTarget[i] = drag && !taken ? 1 : 0;
+            // Free docks always glow a little: a puck coming off the rack may not be sensed until it lands, so they must be findable.
+            this.glowTarget[i] = taken ? 0 : drag ? 1 : 0.3;
             this.nearTarget[i] = near === i ? 1 : 0;
             // An empty dock keeps its last colour while its glow fades out.
             if (taken)
@@ -90,15 +96,22 @@ export class Film {
     setSeats(seats) { this.seatTarget = seats; }
     /** `[{light, pulse}]` per socket. */
     setSockets(levels) { this.socketTarget = levels; }
-    /** What each lane shows: `{chip, color}` or null. `preview` is the quieter attract-mode run; `paired` halves the reach. */
-    setLanes(lanes, { preview, paired, norms }) {
+    /** The empty table's wafer: `level` 1 on show, lower to step back while a puck is in hand, 0 once a chip is docked. */
+    setWafer(level, era) {
+        this.waferTarget = level;
+        this.eraTarget = era;
+        this.eraColTarget.set(ERA[era]);
+    }
+    /** What each lane shows: `{chip, color}` or null. `paired` halves the reach. */
+    setLanes(lanes, { paired, norms }) {
+        this.dialTarget = lanes.some(Boolean) ? 1 : 0;
         const now = this.time;
         const { stagger, conduitDelay, pairSpanDeg } = this.app.dial;
         lanes.forEach((next, i) => {
             const lane = this.lanes[i];
             const arriving = next && !lane.chip;
             const changed = next?.chip.id !== lane.chip?.id;
-            this.gainTarget[i] = next ? (preview ? 0.62 : 1) : 0;
+            this.gainTarget[i] = next ? 1 : 0;
             this.spanTarget[i] = paired ? (pairSpanDeg * Math.PI) / 180 : Math.PI;
             if (next)
                 lane.color.set(next.color);
@@ -106,7 +119,7 @@ export class Film {
                 ROWS.forEach((_, r) => {
                     const t = lane.tracks[trackOf(r)];
                     t.to = next ? norms(r, next.chip) : 0;
-                    t.at = now + (arriving && !preview ? conduitDelay : 0) + r * stagger;
+                    t.at = now + (arriving ? conduitDelay : 0) + r * stagger;
                 });
                 if (next)
                     this.u.uStreams.value.setComponent(i, Math.max(1, next.chip.cores));
@@ -155,6 +168,11 @@ export class Film {
             k.z = damp(k.z, light, 5, dt);
             k.w = damp(k.w, pulse, 5, dt);
         });
+
+        u.uDialOn.value = damp(u.uDialOn.value, this.dialTarget, 3.5, dt);
+        u.uWafer.value = damp(u.uWafer.value, this.waferTarget, 2.6, dt);
+        u.uEra.value = this.reduced ? this.eraTarget : damp(u.uEra.value, this.eraTarget, 1.3, dt);
+        u.uEraCol.value.lerp(this.eraColTarget, 1 - Math.exp(-1.6 * dt));
 
         const hi = u.uTrackHi.value;
         hi.set(damp(hi.x, this.hiTarget[0], 8, dt), damp(hi.y, this.hiTarget[1], 8, dt), damp(hi.z, this.hiTarget[2], 8, dt), damp(hi.w, this.hiTarget[3], 8, dt));

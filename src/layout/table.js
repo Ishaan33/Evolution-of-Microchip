@@ -1,6 +1,6 @@
 const r3 = (v) => Math.round(v * 1000) / 1000; // trims float noise from SVG attributes
 const rad = (deg) => (deg * Math.PI) / 180;
-/** Pucks rest along the lower rim in date order, left to right, leaving the upper half to the dial. */
+/** Pucks rest in a rack along the lower edge, outside the screen, in date order from left to right. */
 export function homePositions(app, count) {
     const { homeRadius, arc: [from, to] } = app.pucks;
     return Array.from({ length: count }, (_, i) => {
@@ -27,14 +27,10 @@ export function conduitPath(app, side, track) {
     const bendX = Math.max(footX, ex - (ey - runY));
     return [[footX, 50], [footX, runY], [bendX, runY], [ex, ey]].map(([x, y]) => [flip(x), y]);
 }
-/** 3D heroes: one big chip, two side by side, or the attract-mode cycling chip. */
-export function layoutHeroes(app, chips, slots, count, cycle, accents) {
-    const { attract, single, pair, shrink } = app.hero;
+/** 3D heroes: one big chip or two side by side. An empty table shows none. */
+export function layoutHeroes(app, chips, slots, count, accents) {
+    const { single, pair, shrink } = app.hero;
     const scale = (i) => 1 - shrink * (i / (chips.length - 1));
-    if (count === 0) {
-        const i = cycle;
-        return [{ key: `a-${chips[i].id}`, chip: chips[i], index: i, pos: [attract.x, attract.y], w: attract.width * scale(i), accent: accents[i], ctl: 2 }];
-    }
     return slots.map((s, i) => s && {
         key: `${s.chip.id}-${count}`, chip: s.chip, index: s.index,
         pos: count === 1 ? [single.x, single.y] : [pair.x[i], pair.y],

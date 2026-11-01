@@ -50,7 +50,7 @@ class Readout {
             this.count(target, delay);
         if (!this.shown) {
             this.shown = 1;
-            gsap.to(this.el, { opacity: 1, duration: 0.5, delay, ease: 'power2.out', overwrite: 'auto' });
+            gsap.to(this.el, { opacity: 1, duration: 0.35, delay: Math.min(delay, 0.15), ease: 'power2.out', overwrite: 'auto' });
         }
     }
     count(target, delay) {
@@ -65,7 +65,7 @@ class Readout {
         draw();
         this.tween = prefersReduced()
             ? gsap.set(state, { t: 1, onComplete: draw })
-            : gsap.to(state, { t: 1, duration: 1.15, delay, ease: 'expo.out', onUpdate: draw });
+            : gsap.to(state, { t: 1, duration: 0.85, delay: Math.min(delay, 0.12), ease: 'expo.out', onUpdate: draw });
     }
     hide() {
         if (!this.shown)
@@ -117,13 +117,12 @@ export class Dial {
             return { row, left, right, crown, hit };
         });
     }
-    /** `sides`: the chip on each side, or null. `preview`: attract mode, with no taps. */
-    update({ sides, preview, dim }) {
+    /** `sides`: the chip on each side, or null. With neither, the dial is gone and takes no taps. */
+    update({ sides }) {
         const paired = !!(sides[0] && sides[1]);
-        this.el.classList.toggle('preview', preview);
-        this.el.classList.toggle('dim', dim);
+        const active = !!(sides[0] || sides[1]);
         this.rows.forEach(({ row, left, right, crown, hit }, i) => {
-            const delay = preview ? i * 0.06 : 0.3 + i * 0.09;
+            const delay = 0.3 + i * 0.09;
             [[left, sides[0]], [right, sides[1]]].forEach(([out, s]) => {
                 if (s)
                     out.show({ label: paired ? '' : row.label, target: row.get(s.chip), delay });
@@ -134,8 +133,8 @@ export class Dial {
                 crown.show({ label: row.label, text: row.compare(sides[1].chip, sides[0].chip), delay });
             else
                 crown.hide();
-            hit.style.pointerEvents = preview ? 'none' : '';
-            hit.setAttribute('tabindex', preview ? -1 : 0);
+            hit.style.pointerEvents = active ? '' : 'none';
+            hit.setAttribute('tabindex', active ? 0 : -1);
         });
     }
     setFocus(key) {

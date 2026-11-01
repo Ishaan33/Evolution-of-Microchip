@@ -7,42 +7,41 @@
 .note {
   position: absolute; left: 50%; top: 50.6%; transform: translateX(-50%); width: 45%; min-height: 8%;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: calc(var(--u) * 0.6); text-align: center;
+  color: var(--ink, #ffffff); background: none; border: none; outline: none; cursor: pointer;
 }
 .note.wide { width: 50%; }
 .note-in { display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 0.4); }
-.name { font: 500 calc(var(--u) * 3.1)/1.08 var(--sans); letter-spacing: -0.005em; }
-.sub { font: 500 calc(var(--u) * 1.65) var(--sans); color: var(--a, var(--muted)); letter-spacing: 0.05em; }
-.eyebrow { font: 600 calc(var(--u) * 1.6) var(--sans); font-style: normal; letter-spacing: 0.16em; text-transform: uppercase; color: var(--a, var(--gold)); }
-.body { font: 400 calc(var(--u) * 1.85)/1.3 var(--sans); color: #ece8dc; max-width: 100%; }
-/* Stories are softer content, so they take the secondary typeface. */
-.body.story { font: 600 calc(var(--u) * 2.2)/1.14 var(--serif); }
-.pager { display: flex; gap: calc(var(--u) * 0.7); margin-top: calc(var(--u) * 0.2); }
-.pager i { width: calc(var(--u) * 0.6); height: calc(var(--u) * 0.6); border-radius: 50%; background: rgba(255, 255, 255, 0.28); transition: background 0.3s, transform 0.3s; }
-.pager i.on { background: var(--a, var(--gold)); transform: scale(1.4); }
+.name { font: 600 calc(var(--u) * 3.2)/1.1 var(--sans); letter-spacing: 0.01em; color: #ffffff; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 0 24px rgba(0, 0, 0, 0.9); }
+.sub { font: 500 calc(var(--u) * 1.75) var(--sans); color: var(--a, var(--gold)); letter-spacing: 0.06em; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95); }
+.eyebrow { font: 700 calc(var(--u) * 1.7) var(--sans); font-style: normal; letter-spacing: 0.18em; text-transform: uppercase; color: var(--a, var(--gold)); text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95); }
+.body { color: #ffffff; max-width: 100%; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95); }
+/* Brand type: Oxanium for names, numbers and labels; Abhaya Libre for anything read as a sentence. */
+.body, .body.story, .line { font: 600 calc(var(--u) * 2.4)/1.16 var(--serif); text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95); }
+.pager { display: flex; gap: calc(var(--u) * 0.7); margin-top: calc(var(--u) * 0.3); }
+.pager i { width: calc(var(--u) * 0.65); height: calc(var(--u) * 0.65); border-radius: 50%; background: rgba(255, 255, 255, 0.35); box-shadow: 0 0 6px rgba(0, 0, 0, 0.8); transition: background 0.3s, transform 0.3s, box-shadow 0.3s; }
+.pager i.on { background: var(--a, var(--gold)); transform: scale(1.45); box-shadow: 0 0 10px var(--a, var(--gold)); }
 .duo { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: calc(var(--u) * 2.2); width: 100%; }
 .duo .side { display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 0.35); }
-.duo .name { font-size: calc(var(--u) * 2.25); }
-.duo .sub { font-size: calc(var(--u) * 1.9); font-weight: 600; }
+.duo .name { font-size: calc(var(--u) * 2.35); font-weight: 600; color: #ffffff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95); }
+.duo .sub { font-size: calc(var(--u) * 1.95); font-weight: 600; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95); }
 
 /* Curved words on the dial */
-.dial { transition: opacity 0.35s; }
-.dial.preview { opacity: 0.86; }
-.dial.dim { opacity: 0.28; }
-.dial-text { fill: var(--ink); paint-order: stroke; stroke: rgba(3, 4, 8, 0.55); stroke-width: 0.32px; pointer-events: none; }
-.dial-lbl { font: 600 1.55px var(--sans); letter-spacing: 0.17px; text-transform: uppercase; fill: rgba(243, 239, 230, 0.76); }
-.dial-val { font: 600 2.55px var(--sans); font-variant-numeric: tabular-nums; }
+.dial-text { fill: #ffffff; paint-order: stroke; stroke: rgba(0, 0, 0, 0.9); stroke-width: 0.45px; pointer-events: none; }
+.dial-lbl { font: 700 1.6px var(--sans); letter-spacing: 0.18px; text-transform: uppercase; fill: rgba(255, 255, 255, 0.88); }
+.dial-val { font: 700 2.65px var(--sans); font-variant-numeric: tabular-nums; fill: #ffffff; }
 .dial-hit { fill: none; stroke: transparent; pointer-events: stroke; cursor: pointer; outline: none; }
-.dial-hit:focus-visible { stroke: rgba(217, 197, 143, 0.12); }
+.dial-hit:focus-visible { stroke: rgba(217, 197, 143, 0.2); }
 
-/* Attract mode */
-.attract { position: absolute; left: 50%; top: 50.6%; transform: translateX(-50%); width: 72%; text-align: center; pointer-events: none; }
-.title { font: 500 calc(var(--u) * 3.5)/1.08 var(--sans); letter-spacing: -0.005em; }
-.attract-slot { min-height: calc(var(--u) * 3); margin-top: calc(var(--u) * 0.7); }
-.attract .sub { font-size: calc(var(--u) * 1.75); }
-.hint { position: absolute; left: 50%; top: calc(var(--u) * 26.5); transform: translateX(-50%); width: 62%; font: 500 calc(var(--u) * 1.65) var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); animation: breathe 3.4s ease-in-out infinite; }
-.hint b { font-weight: 500; color: var(--gold); }
-.hint.low { top: auto; width: 13%; transform: translate(-50%, -50%); text-align: center; margin: 0; font-size: calc(var(--u) * 1.55); line-height: 1.2; letter-spacing: 0.08em; pointer-events: none; }
-@keyframes breathe { 50% { opacity: 0.5; } }
+/* The empty table */
+.attract { position: absolute; left: 50%; top: 25%; transform: translateX(-50%); width: 56%; display: flex; flex-direction: column; align-items: center; text-align: center; pointer-events: none; }
+.big-year { font: 700 calc(var(--u) * 10)/1 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; transition: color 1.2s; text-shadow: 0 0 28px currentColor, 0 4px 16px rgba(0, 0, 0, 0.9); }
+.title { font: 600 calc(var(--u) * 3.6)/1.1 var(--sans); letter-spacing: 0.01em; margin-top: calc(var(--u) * 1.4); color: #ffffff; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 0 24px rgba(0, 0, 0, 0.9); }
+.attract-slot { min-height: calc(var(--u) * 6); margin-top: calc(var(--u) * 1.3); }
+.line { display: block; color: #ffffff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95); }
+.hint { white-space: nowrap; position: absolute; left: 50%; top: calc(var(--u) * 51); transform: translateX(-50%); width: 62%; font: 600 calc(var(--u) * 1.7) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: #ffffff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95); animation: breathe 3.4s ease-in-out infinite; }
+.hint b { font-weight: 700; color: var(--gold); text-shadow: 0 0 12px rgba(217, 197, 143, 0.6); }
+.hint.low { white-space: normal; top: auto; width: 14%; transform: translate(-50%, -50%); text-align: center; margin: 0; font-size: calc(var(--u) * 1.6); font-weight: 600; line-height: 1.25; letter-spacing: 0.1em; color: #ffffff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95); pointer-events: none; }
+@keyframes breathe { 50% { opacity: 0.72; } }
 
 /* The puck in hand, while the table is otherwise empty */
 .hold { position: absolute; left: 50%; top: 50.6%; transform: translateX(-50%); width: 60%; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 0.5); text-align: center; pointer-events: none; animation: fadein 0.35s ease-out; }

@@ -3,9 +3,9 @@
   "pucks": {
     "sensor": "auto",
     "diameterMm": 80,
-    "homeRadius": 41.6,
-    "arc": [247, 113],
-    "socketTolerance": 5,
+    "homeRadius": 58.5,
+    "arc": [238, 122],
+    "socketTolerance": 6.5,
     "footToleranceMm": 2.5,
     "spring": {"stiffness": 230, "damping": 24},
     "signatures": {"c1": [28, 40, 52], "c2": [28, 46, 58], "c3": [34, 40, 58], "c4": [34, 46, 52], "c5": [40, 46, 52], "c6": [28, 34, 46], "c7": [34, 52, 58]}
@@ -13,7 +13,6 @@
   "dock": {"positions": [[34, 66.5], [66, 66.5]], "radius": 8, "snap": 12},
   "dial": {"inner": 23.5, "width": 5, "gap": 1, "pairSpanDeg": 70, "stagger": 0.09, "conduitDelay": 0.38},
   "hero": {
-    "attract": {"x": 50, "y": 37, "width": 19, "grab": 26},
     "single": {"x": 50, "y": 37, "width": 19, "grab": 26},
     "pair": {"x": [39.5, 60.5], "y": 38.5, "width": 14.5, "grab": 18},
     "shrink": 0.35

@@ -37,6 +37,8 @@ uniform float uMarks[28];     // track * 7 + chip
 uniform vec2 uSpan, uGain, uStreams;
 uniform vec3 uCol[2];
 uniform vec4 uTrackHi;
+uniform float uDialOn, uWafer, uEra;
+uniform vec3 uEraCol;
 
 const float PI = 3.14159265;
 
@@ -106,10 +108,23 @@ vec3 dockPad(vec2 p, int i) {
   float age = uShock[i].x;
   if (age >= 0.0) {
     vec3 s = uShock[i].yzw;
-    float fade = exp(-age * 3.4);
-    c += s * ring(d - (uDockR + age * 36.0), 0.16 + age * 0.24) * fade * 1.6;
-    c += s * ring(d - (uDockR + max(age - 0.12, 0.0) * 24.0), 0.1 + age * 0.14) * fade * 0.7;
-    c += s * exp(-d * d / 90.0) * exp(-age * 5.0) * 0.7;
+    float fade = exp(-age * 3.2);
+    // Primary supersonic shockwave with brilliant white-hot leading crest
+    float r1 = uDockR + age * 44.0;
+    float wave1 = ring(d - r1, 0.18 + age * 0.26);
+    c += s * wave1 * fade * 2.4 + vec3(1.0) * pow(wave1, 2.5) * fade * 1.4;
+
+    // Secondary harmonic echo wave
+    float r2 = uDockR + max(age - 0.09, 0.0) * 30.0;
+    float wave2 = ring(d - r2, 0.12 + age * 0.16);
+    c += s * wave2 * fade * 1.1;
+
+    // Tertiary subtle resonant ripple
+    float r3 = uDockR + max(age - 0.2, 0.0) * 18.0;
+    c += s * ring(d - r3, 0.09 + age * 0.1) * fade * 0.55;
+
+    // Central flash of ionized energy
+    c += mix(s, vec3(1.0), 0.6) * exp(-d * d / 65.0) * exp(-age * 6.5) * 2.0;
   }
   return c;
 }
@@ -129,30 +144,36 @@ vec3 band(float phi, float dr, float rc, float hw, int lane, int track, float ep
 
   float t = clamp(s / L, 0.0, 1.0);
   // The first stretch stays dark so the words printed there can be read.
-  float body = mix(0.11, 0.66, smoothstep(0.0, 1.0, t) * smoothstep(5.0, 24.0, s));
+  float body = mix(0.12, 0.75, smoothstep(0.0, 1.0, t) * smoothstep(5.0, 24.0, s));
   vec3 fill = col * body;
-  float rate = 0.3 + f * f * 2.6;
+  float rate = 0.35 + f * f * 2.8;
 
-  if (track == 2) {                       // processors: one stream per core
+  if (track == 2) {                       // Processors: pulsating data streams per execution core
     float n = uStreams[lane];
     float v = (dr / hw * 0.5 + 0.5) * n;
     float id = floor(v);
-    float groove = smoothstep(0.0, 0.14, 0.5 - abs(fract(v) - 0.5));
-    float beat = fract((s - uTime * (5.0 + 3.0 * hash(vec2(id, 3.0))) + hash(vec2(id, 9.0)) * 40.0) / (13.0 + 8.0 * hash(vec2(id, 5.0))));
-    fill = fill * mix(0.34, 1.0, groove) + col * smoothstep(0.0, 0.9, beat) * smoothstep(1.0, 0.94, beat) * groove * 1.1 * t;
-  } else if (track == 1) {                // speed: pulses whose pace is the clock
-    float beat = fract((s - uTime * rate * 8.0) / 8.0);
-    fill += col * smoothstep(0.0, 0.8, beat) * smoothstep(1.0, 0.84, beat) * 0.62 * t;
-  } else if (track == 0) {                // power: heat shimmer that grows with the watts
-    float h = noise(vec2(s * 0.3 - uTime * 0.9, dr * 0.75 + uTime * 0.55)) * noise(vec2(s * 0.11 + uTime * 0.35, dr * 0.3));
-    fill += mix(col, vec3(1.0, 0.86, 0.72), 0.35) * h * h * f * 3.4 * t;
-  } else {                                // year: a long slow swell
-    fill += col * pow(0.5 + 0.5 * sin(s * 0.3 - uTime * 0.9), 3.0) * 0.42 * t;
+    float groove = smoothstep(0.0, 0.16, 0.5 - abs(fract(v) - 0.5));
+    float beat = fract((s - uTime * (6.5 + 3.5 * hash(vec2(id, 3.0))) + hash(vec2(id, 9.0)) * 40.0) / (12.0 + 7.0 * hash(vec2(id, 5.0))));
+    float corePulse = pow(beat, 4.0);
+    fill = fill * mix(0.38, 1.0, groove) + col * corePulse * groove * 1.5 * t + vec3(1.0) * pow(corePulse, 2.5) * groove * 0.6 * t;
+  } else if (track == 1) {                // Speed: clock frequency pulses racing with high clock pace
+    float beat = fract((s - uTime * rate * 11.0) / 7.0);
+    float clockWave = pow(beat, 5.0);
+    fill += col * clockWave * 1.35 * t + vec3(0.9, 0.95, 1.0) * pow(clockWave, 2.0) * 0.55 * t;
+  } else if (track == 0) {                // Power: dynamic thermal plasma turbulence and glowing heat shimmer
+    float h1 = noise(vec2(s * 0.35 - uTime * 1.4, dr * 0.85 + uTime * 0.8));
+    float h2 = noise(vec2(s * 0.18 + uTime * 0.6, dr * 0.45 - uTime * 0.4));
+    float h = h1 * h2;
+    fill += mix(col, vec3(1.0, 0.88, 0.75), 0.45) * pow(h * 2.0, 2.2) * f * 4.2 * t;
+  } else {                                // Year: elegant chronological light surge
+    float wave = pow(0.5 + 0.5 * sin(s * 0.35 - uTime * 1.2), 3.5);
+    fill += col * (0.35 + wave * 0.85) * t;
   }
 
-  // The leading edge runs hot, which is what the bloom catches.
-  float head = exp(-pow(max(L - s, 0.0) / 1.2, 2.0)) * smoothstep(1.6, 14.0, L);
-  fill += col * head * 1.15 + vec3(1.0) * head * head * 0.3;
+  // Searing plasma leading edge with intense bloom and trailing photon wake
+  float head = exp(-pow(max(L - s, 0.0) / 1.35, 2.0)) * smoothstep(1.6, 14.0, L);
+  float hotPlasma = pow(head, 2.0);
+  fill += col * head * 2.2 + vec3(1.0) * hotPlasma * 1.2;
   return mix(c, fill * gain, inside);
 }
 
@@ -195,11 +216,62 @@ vec3 dial(vec2 p, float r) {
   return c * smoothstep(-2.6, -0.2, p.y);
 }
 
+/** One generation of dies across the wafer. Only dies that fit whole are lit properly, as on a real wafer. */
+vec3 dies(vec2 p, float size, vec3 col, float R) {
+  vec2 q = p / size;
+  vec2 id = floor(q);
+  vec2 f = abs(fract(q) - 0.5) * size;
+  float inDie = 1.0 - smoothstep(size * 0.5 - uPx * 1.6, size * 0.5 - uPx * 0.6, max(f.x, f.y));
+  float h = hash(id + size);
+  float twinkle = pow(0.5 + 0.5 * sin(uTime * (0.25 + h * 0.5) + h * 50.0), 8.0);
+  float whole = step(length(abs((id + 0.5) * size) + size * 0.5), R);
+  return col * inDie * (0.012 + twinkle * 0.12) * mix(0.3, 1.0, whole);
+}
+
+/**
+ * The empty table: a silicon wafer. As uEra runs from 1976 to 2026 the same disc is cut into ever smaller dies, which is the
+ * story of the exhibit told without any one chip.
+ */
+vec3 wafer(vec2 p, float r, float a) {
+  if (uWafer < 0.002) return vec3(0.0);
+  const float R = 48.4;
+  float notch = smoothstep(1.1 - uPx, 1.1 + uPx, length(p - vec2(0.0, R)));
+  float inside = (1.0 - smoothstep(R - uPx, R + uPx, r)) * notch;
+  float low = floor(uEra);
+  float mixed = smoothstep(0.15, 0.85, fract(uEra));
+  float s0 = 9.6 * pow(1.6 / 9.6, low / 6.0);
+  float s1 = 9.6 * pow(1.6 / 9.6, min(low + 1.0, 6.0) / 6.0);
+  vec3 c = mix(dies(p, s0, uEraCol, R), dies(p, s1, uEraCol, R), mixed);
+  // Photonic radar sweep across the silicon wafer
+  float sweep = fract((a + 3.14159) / 6.283185 - uTime * 0.11);
+  float beam = pow(sweep, 16.0) * smoothstep(R, 6.0, r);
+  float sparkHead = pow(sweep, 64.0) * smoothstep(R, 8.0, r);
+  c += uEraCol * beam * 0.36 + (vec3(1.0) + uEraCol) * sparkHead * 0.55;
+  // Concentric photolithography alignment reticle rings
+  float reticle = ring(r - 18.0, 0.055) + ring(r - 32.0, 0.055) + ring(r - 42.5, 0.055);
+  c += uEraCol * reticle * (0.08 + 0.05 * sin(uTime * 2.2 - r * 0.25));
+  // A band of light crosses the wafer now and then, like tilting one under a lamp.
+  float rr = fract(uTime * 0.05) * R * 1.6;
+  c *= 1.0 + 2.2 * exp(-pow((r - rr) / 3.5, 2.0));
+  vec3 iri = 0.5 + 0.5 * cos(6.283 * (r * 0.03 + a * 0.16 + vec3(0.0, 0.33, 0.67)) + uTime * 0.05);
+  c += iri * pow(0.5 + 0.5 * cos(a * 2.0 - uTime * 0.09), 4.0) * 0.016;
+  // Clear windows: words must stay readable and the docks must not sit in a pattern.
+  float words = length((p - vec2(0.0, 9.0)) / vec2(34.0, 18.0));
+  c *= mix(0.22, 1.0, smoothstep(0.72, 1.15, words));
+  float hintWords = length((p - vec2(0.0, -26.0)) / vec2(30.0, 5.5));
+  c *= mix(0.16, 1.0, smoothstep(0.6, 1.1, hintWords));
+  float dockD = min(distance(p, uDock[0]), distance(p, uDock[1]));
+  c *= smoothstep(uDockR - 0.2, uDockR + 0.9, dockD);
+  c = c * inside + uEraCol * ring(r - R, 0.07) * notch * 0.2;
+  return c * uWafer;
+}
+
 /** Each puck at rest glows at its edge in its era's colour; a socket waiting for its puck pulses gently. */
 vec3 sockets(vec2 p) {
   vec3 c = vec3(0.0);
   for (int i = 0; i < 7; i++) {
     vec4 k = uSockets[i];
+    if (length(k.xy) > 50.0) continue;
     float d = length(p - k.xy) - uPuckR;
     c += uSocketCol[i] * exp(-pow(max(d, 0.0) / 1.0, 2.0)) * step(-0.5, d) * k.z * 0.42;
     c += uSocketCol[i] * ring(d - 0.5, 0.09) * k.w * (0.4 + 0.3 * sin(uTime * 2.4));
@@ -216,8 +288,9 @@ void main() {
   vec3 c = substrate(p, r, a);
   c += wake(p);
   c += dockPad(p, 0) + dockPad(p, 1);
+  c += wafer(p, r, a);
   c += sockets(p);
-  c += dial(p, r);
+  c += dial(p, r) * uDialOn;
 
   // Shadows fall last, so a lifted puck darkens the bands it passes over too.
   for (int i = 0; i < 7; i++) {
@@ -248,8 +321,25 @@ uniform float uTime, uReach, uLen, uGain;
 uniform vec3 uColor;
 void main() {
   float s = vS * uLen;
-  float shown = 1.0 - smoothstep(uReach * uLen - 1.0, uReach * uLen, s);
-  float beat = pow(fract((s - uTime * 14.0) / 11.0), 6.0);
-  vec3 c = uColor * (0.12 + beat * 1.0);
+  float reachLen = uReach * uLen;
+  float shown = 1.0 - smoothstep(reachLen - 0.8, reachLen, s);
+
+  // Multi-frequency photonic data bursts traveling along the conduit
+  float p1 = pow(fract((s - uTime * 22.0) / 12.0), 6.0);
+  float p2 = pow(fract((s - uTime * 34.0 + 5.0) / 18.0), 9.0);
+  float p3 = pow(fract((s - uTime * 14.0 + 8.0) / 8.0), 4.0);
+
+  // Shimmering superconducting core
+  float shimmer = 0.88 + 0.12 * sin(s * 3.5 - uTime * 9.0);
+  vec3 base = uColor * (0.22 + p1 * 0.75 + p2 * 0.5 + p3 * 0.3) * shimmer;
+
+  // Blazing hot white core in the center of high-energy bursts
+  float hotCore = pow(p1, 2.5) * 0.9 + pow(p2, 3.0) * 0.7;
+  vec3 c = base + vec3(1.0, 1.0, 1.0) * hotCore;
+
+  // Searing spark at the advancing front when drawing the conduit
+  float spark = exp(-pow(max(reachLen - s, 0.0) / 1.4, 2.0)) * step(s, reachLen) * smoothstep(0.0, 4.0, reachLen);
+  c += (vec3(1.0) + uColor * 0.8) * spark * 2.8;
+
   gl_FragColor = vec4(c * shown * uGain, 1.0);
 }`;
